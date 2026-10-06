@@ -1,7 +1,11 @@
 {
   "name": "obsidian-base-board",
-  "version": "2.5.1",
+  "version": "3.0.0",
   "description": "Kanban board view for Bases with drag and drop",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Guybrush3791/obsidian-base-board.git"
+  },
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
@@ -20,7 +24,10 @@
     "bases",
     "task-management"
   ],
-  "author": "Michael DeRazon",
+  "author": "Guybrush (https://github.com/Guybrush3791)",
+  "contributors": [
+    "Michael DeRazon (https://github.com/mderazon) - original author"
+  ],
   "license": "MIT",
   "devDependencies": {
     "@eslint/js": "10.0.1",
