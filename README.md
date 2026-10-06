@@ -53,7 +53,7 @@ You can set board-specific default frontmatter properties for new cards created 
 
 ```yaml
 views:
-  - type: kanban
+  - type: base-board-kanban
     name: Frontend Board
     newItemFolder: Tasks
     newItemTemplate: Templates/task.md
@@ -63,6 +63,17 @@ views:
 ```
 
 This ensures new cards automatically receive required frontmatter fields, keeping them visible on filtered boards.
+
+### Migrating boards created before the `base-board-kanban` view type
+
+Obsidian 1.14 added a native Bases **Kanban** layout under the `kanban` view type — the same id Base Board used to register under, so the two could not coexist. Base Board now registers under its own `base-board-kanban` view type. New boards use `type: base-board-kanban` automatically.
+
+Boards created by older versions still say `type: kanban` in their `.base` file and will now open as Obsidian's native Kanban. To convert them, run the command **"Base Board: Migrate legacy board views"** — it lists every `type: kanban` view, pre-selects the ones carrying Base Board settings, and rewrites the ones you confirm to `type: base-board-kanban` (leaving genuine native Kanban views alone). Or change the line by hand:
+
+```yaml
+views:
+  - type: base-board-kanban # was: kanban
+```
 
 ## Installation
 
