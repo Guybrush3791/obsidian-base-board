@@ -93,6 +93,7 @@ export class KanbanView extends BasesView implements HoverParent {
     this.scrollEl = scrollEl;
     this.plugin = plugin;
     this.containerEl = scrollEl.createDiv({ cls: "base-board-container" });
+    scrollEl.addClass("base-board-scroll-host");
 
     this.tags = new Tags(this);
     this.cardManager = new CardManager(this);
@@ -114,6 +115,7 @@ export class KanbanView extends BasesView implements HoverParent {
   onload(): void {}
 
   onunload(): void {
+    this.scrollEl.removeClass("base-board-scroll-host");
     this.dragDropManager.destroy();
     if (this.renderTimer) window.clearTimeout(this.renderTimer);
   }
