@@ -1033,9 +1033,37 @@
   overflow: hidden;
 }
 
-/* Let the docked calendar reach the very bottom of the view. */
-.base-board-scroll-host {
+/* When the board is a tab of its own, the elements from the board up to the
+   tab's view-content drop their right/bottom padding and scrollbar gutter, so
+   the board and the docked calendar reach the right panel and the bottom.
+   The board scrolls internally, so the host never needs to. The repeated
+   class only raises specificity above Obsidian's own view-content rules. */
+.workspace-leaf-content .base-board-host.base-board-host.base-board-host {
+  padding-right: 0;
   padding-bottom: 0;
+  scrollbar-gutter: auto;
+  overflow: hidden;
+}
+
+.workspace-leaf-content
+  .base-board-host-root.base-board-host-root.base-board-host-root {
+  display: flex;
+  flex-direction: column;
+}
+
+.workspace-leaf-content
+  .base-board-host-root
+  .base-board-host.base-board-host.base-board-host {
+  flex: 1 1 0;
+  height: auto;
+  min-height: 0;
+}
+
+.workspace-leaf-content
+  .base-board-host-root
+  .base-board-host.base-board-host.base-board-host:has(> .base-board-host) {
+  display: flex;
+  flex-direction: column;
 }
 
 .base-board-calendar--collapsed {

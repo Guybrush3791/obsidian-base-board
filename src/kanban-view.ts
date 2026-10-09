@@ -66,6 +66,9 @@ export class KanbanView extends BasesView implements HoverParent {
   public currentGroups: BasesEntryGroup[] = [];
   public cardManager: CardManager;
   private calendarManager: CalendarManager;
+  /** Host elements (scrollEl up to the leaf's view-content) styled to let
+   * the board fill the tab edge to edge; cleaned up on unload. */
+  private hostEls: HTMLElement[] = [];
 
   /** Prevent re-renders while we batch-update frontmatter. */
   private isUpdating = false;
@@ -93,7 +96,6 @@ export class KanbanView extends BasesView implements HoverParent {
     this.scrollEl = scrollEl;
     this.plugin = plugin;
     this.containerEl = scrollEl.createDiv({ cls: "base-board-container" });
-    scrollEl.addClass("base-board-scroll-host");
 
     this.tags = new Tags(this);
     this.cardManager = new CardManager(this);
@@ -115,9 +117,43 @@ export class KanbanView extends BasesView implements HoverParent {
   onload(): void {}
 
   onunload(): void {
-    this.scrollEl.removeClass("base-board-scroll-host");
+    this.releaseHost();
     this.dragDropManager.destroy();
     if (this.renderTimer) window.clearTimeout(this.renderTimer);
+  }
+
+  /**
+   * Let the board reach the edges of its tab. Obsidian pads the view and
+   * reserves a scrollbar gutter around it, which leaves a strip next to the
+   * right panel and under the docked calendar. Only applied when the board is
+   * a tab of its own; embedded bases keep the host note's layout.
+   */
+  private claimHost(): void {
+    if (this.hostEls.length > 0) return;
+    if (!this.scrollEl.isConnected || this.scrollEl.closest(".bases-embed")) {
+      return;
+    }
+    const root = this.scrollEl.closest<HTMLElement>(
+      ".workspace-leaf-content .view-content",
+    );
+    if (!root) return;
+
+    for (
+      let el: HTMLElement | null = this.scrollEl;
+      el && root.contains(el);
+      el = el.parentElement
+    ) {
+      el.addClass("base-board-host");
+      this.hostEls.push(el);
+    }
+    root.addClass("base-board-host-root");
+  }
+
+  private releaseHost(): void {
+    for (const el of this.hostEls) {
+      el.removeClass("base-board-host", "base-board-host-root");
+    }
+    this.hostEls = [];
   }
 
   public focus(): void {
@@ -619,6 +655,7 @@ export class KanbanView extends BasesView implements HoverParent {
     this.selectedCards.clear();
     const scrollState = this.captureScrollState();
     this.calendarManager.captureScroll();
+    this.claimHost();
 
     // Index stable DOM nodes before rebuilding the lightweight board shell.
     // Columns are detached as complete subtrees, preserving their card lists,
