@@ -160,36 +160,7 @@ export class CardManager {
 
         const file = this.view.app.vault.getAbstractFileByPath(filePath);
         if (!(file instanceof TFile)) return;
-
-        // Handle standard Obsidian modifiers using Keymap.isModEvent(e)
-        const mod = Keymap.isModEvent(e);
-        if (mod) {
-          e.preventDefault();
-          void this.view.app.workspace.getLeaf(mod).openFile(file);
-          return;
-        }
-
-        const openBehavior = this.view.getCardOpenBehavior();
-        if (openBehavior === "split") {
-          if (
-            this.view.detailLeaf &&
-            this.view.isLeafAttached(this.view.detailLeaf)
-          ) {
-            void this.view.detailLeaf.openFile(file);
-          } else {
-            this.view.detailLeaf = this.view.app.workspace.getLeaf(
-              "split",
-              "vertical",
-            );
-            void this.view.detailLeaf.openFile(file);
-          }
-        } else if (openBehavior === "tab") {
-          void this.view.app.workspace.getLeaf("tab").openFile(file);
-        } else if (openBehavior === "active") {
-          void this.view.app.workspace.getLeaf(false).openFile(file);
-        } else {
-          new CardDetailModal(this.view.app, file, this.view).open();
-        }
+        this.openCardFile(file, e);
       });
 
       // Middle-click → always open in new tab
@@ -274,22 +245,7 @@ export class CardManager {
     }
 
     const titleEl = cardEl.createDiv({ cls: "base-board-card-title" });
-
-    // Respect cardTitleProperty if configured — use a frontmatter property
-    // (e.g. "title") as the card heading instead of the filename.
-    let cardTitle = entry.file?.basename ?? "Untitled";
-    const titleProp = this.view.config.get("cardTitleProperty") as
-      string | undefined;
-    if (titleProp) {
-      const propId = titleProp.startsWith("note.")
-        ? titleProp
-        : `note.${titleProp}`;
-      const tv = entry.getValue(propId as BasesPropertyId);
-      if (tv && !(tv instanceof NullValue) && tv.isTruthy()) {
-        cardTitle = formatValueForChip(tv);
-      }
-    }
-    titleEl.createSpan({ text: cardTitle });
+    titleEl.createSpan({ text: this.getCardTitle(entry) });
 
     // ---- Edit button (visible on hover) ----
     const editBtn = cardEl.createDiv({ cls: "base-board-card-edit-btn" });
@@ -370,6 +326,60 @@ export class CardManager {
         );
         toggleBtn.setText(expanded ? "show less" : `+${overflowCount} more`);
       });
+    }
+  }
+
+  /**
+   * The heading shown for a card. Respects cardTitleProperty if configured —
+   * a frontmatter property (e.g. "title") used instead of the filename.
+   */
+  public getCardTitle(entry: BasesEntry): string {
+    const titleProp = this.view.config.get("cardTitleProperty") as
+      string | undefined;
+    if (titleProp) {
+      const propId = titleProp.startsWith("note.")
+        ? titleProp
+        : `note.${titleProp}`;
+      const tv = entry.getValue(propId as BasesPropertyId);
+      if (tv && !(tv instanceof NullValue) && tv.isTruthy()) {
+        return formatValueForChip(tv);
+      }
+    }
+    return entry.file?.basename ?? "Untitled";
+  }
+
+  /**
+   * Open a card's note. Mod-clicks follow the standard Obsidian modifiers;
+   * otherwise the board's "Open card in" option decides where it opens.
+   */
+  public openCardFile(file: TFile, e?: MouseEvent): void {
+    const mod = e ? Keymap.isModEvent(e) : false;
+    if (e && mod) {
+      e.preventDefault();
+      void this.view.app.workspace.getLeaf(mod).openFile(file);
+      return;
+    }
+
+    const openBehavior = this.view.getCardOpenBehavior();
+    if (openBehavior === "split") {
+      if (
+        this.view.detailLeaf &&
+        this.view.isLeafAttached(this.view.detailLeaf)
+      ) {
+        void this.view.detailLeaf.openFile(file);
+      } else {
+        this.view.detailLeaf = this.view.app.workspace.getLeaf(
+          "split",
+          "vertical",
+        );
+        void this.view.detailLeaf.openFile(file);
+      }
+    } else if (openBehavior === "tab") {
+      void this.view.app.workspace.getLeaf("tab").openFile(file);
+    } else if (openBehavior === "active") {
+      void this.view.app.workspace.getLeaf(false).openFile(file);
+    } else {
+      new CardDetailModal(this.view.app, file, this.view).open();
     }
   }
 
@@ -478,29 +488,7 @@ export class CardManager {
       item
         .setTitle("Open")
         .setIcon("lucide-file-text")
-        .onClick(() => {
-          const openBehavior = this.view.getCardOpenBehavior();
-          if (openBehavior === "split") {
-            if (
-              this.view.detailLeaf &&
-              this.view.isLeafAttached(this.view.detailLeaf)
-            ) {
-              void this.view.detailLeaf.openFile(file);
-            } else {
-              this.view.detailLeaf = this.view.app.workspace.getLeaf(
-                "split",
-                "vertical",
-              );
-              void this.view.detailLeaf.openFile(file);
-            }
-          } else if (openBehavior === "tab") {
-            void this.view.app.workspace.getLeaf("tab").openFile(file);
-          } else if (openBehavior === "active") {
-            void this.view.app.workspace.getLeaf(false).openFile(file);
-          } else {
-            new CardDetailModal(this.view.app, file, this.view).open();
-          }
-        });
+        .onClick(() => this.openCardFile(file));
     });
 
     menu.addItem((item) => {

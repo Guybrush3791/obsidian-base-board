@@ -76,6 +76,16 @@ export class Tags {
     return fileTags.map((t) => (t.startsWith("#") ? t.slice(1) : t));
   }
 
+  /** True when no tag filter is active or the file carries an active tag. */
+  public matchesFilters(file: TFile | null | undefined): boolean {
+    if (this.activeFilters.size === 0) return true;
+    if (!(file instanceof TFile)) return false;
+    const fileTags = this.extractTagsFromFile(file);
+    return Array.from(this.activeFilters).some((filter) =>
+      fileTags.includes(filter),
+    );
+  }
+
   public promptEditTags(file: TFile): void {
     const currentTags = this.extractTagsFromFile(file);
     new TagEditModal(this.view.app, currentTags, this, (newTags: string[]) => {

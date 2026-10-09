@@ -48,18 +48,9 @@ export class ColumnManager {
       return pathA.localeCompare(pathB);
     });
 
-    const activeFilters = this.view.tags.activeFilters;
-    const visibleCards =
-      activeFilters.size > 0
-        ? sorted.filter((entry) => {
-            const file = entry.file;
-            if (!(file instanceof TFile)) return false;
-            const fileTags = this.view.tags.extractTagsFromFile(file);
-            return Array.from(activeFilters).some((filter) =>
-              fileTags.includes(filter),
-            );
-          })
-        : sorted;
+    const visibleCards = sorted.filter((entry) =>
+      this.view.tags.matchesFilters(entry.file),
+    );
 
     const columnEl =
       existingColumnEl ?? boardEl.createDiv({ cls: "base-board-column" });

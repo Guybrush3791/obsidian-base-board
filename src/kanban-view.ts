@@ -17,6 +17,7 @@ import type BaseBoardPlugin from "./main";
 import { DragDropManager } from "./drag-drop";
 import { ColumnManager } from "./column";
 import { CardManager } from "./card";
+import { CalendarManager } from "./calendar";
 import { Tags } from "./tags";
 import {
   compareOrderValues,
@@ -36,6 +37,9 @@ import {
   CONFIG_KEY_WIP_LIMITS,
   CONFIG_KEY_COVER_PROPERTY,
   CONFIG_KEY_ADD_TO_TOP,
+  CONFIG_KEY_SHOW_CALENDAR,
+  CONFIG_KEY_CALENDAR_PROPERTY,
+  CONFIG_KEY_CALENDAR_COLLAPSED,
   VIEW_TYPE,
 } from "./constants";
 
@@ -61,6 +65,7 @@ export class KanbanView extends BasesView implements HoverParent {
   private columnManager: ColumnManager;
   public currentGroups: BasesEntryGroup[] = [];
   public cardManager: CardManager;
+  private calendarManager: CalendarManager;
 
   /** Prevent re-renders while we batch-update frontmatter. */
   private isUpdating = false;
@@ -92,6 +97,7 @@ export class KanbanView extends BasesView implements HoverParent {
     this.tags = new Tags(this);
     this.cardManager = new CardManager(this);
     this.columnManager = new ColumnManager(this);
+    this.calendarManager = new CalendarManager(this);
 
     this.dragDropManager = new DragDropManager(this.app, {
       onCardDrop: (
@@ -178,6 +184,26 @@ export class KanbanView extends BasesView implements HoverParent {
             type: "toggle" as const,
             displayName: "Add new cards to top",
             default: false,
+          },
+        ],
+      },
+      {
+        type: "group" as const,
+        displayName: "Calendar",
+        items: [
+          {
+            key: CONFIG_KEY_SHOW_CALENDAR,
+            type: "toggle" as const,
+            displayName: "Show calendar",
+            default: true,
+          },
+          {
+            key: CONFIG_KEY_CALENDAR_PROPERTY,
+            type: "property" as const,
+            displayName: "Date property",
+            default: "note.date",
+            placeholder: "E.g. date",
+            filter: (prop: string) => prop.startsWith("note."),
           },
         ],
       },
@@ -271,6 +297,30 @@ export class KanbanView extends BasesView implements HoverParent {
       return "cover";
     }
     return typeof val === "string" && val.trim() !== "" ? val.trim() : null;
+  }
+
+  // ---------------------------------------------------------------------------
+  //  Calendar
+  // ---------------------------------------------------------------------------
+
+  public isCalendarEnabled(): boolean {
+    return this.config?.get(CONFIG_KEY_SHOW_CALENDAR) !== false;
+  }
+
+  /** Frontmatter key the calendar reads card dates from (default "date"). */
+  public getCalendarDateProperty(): string {
+    const propId = this.config?.getAsPropertyId(CONFIG_KEY_CALENDAR_PROPERTY);
+    const prop = propId?.startsWith("note.") ? propId.slice(5) : "date";
+    return prop === "__proto__" || prop === "constructor" ? "date" : prop;
+  }
+
+  public isCalendarCollapsed(): boolean {
+    return !!this.config?.get(CONFIG_KEY_CALENDAR_COLLAPSED);
+  }
+
+  public setCalendarCollapsed(collapsed: boolean): void {
+    this.config?.set(CONFIG_KEY_CALENDAR_COLLAPSED, collapsed ? true : null);
+    this.calendarManager.refresh('[data-action="collapse"]');
   }
 
   public isLeafAttached(leaf: WorkspaceLeaf): boolean {
@@ -530,7 +580,7 @@ export class KanbanView extends BasesView implements HoverParent {
     this.setColumnCollapsed(columnName, !this.isColumnCollapsed(columnName));
   }
 
-  private getGroupForColumn(columnName: string): BasesEntryGroup | null {
+  public getGroupForColumn(columnName: string): BasesEntryGroup | null {
     for (const group of this.currentGroups) {
       if (this.getColumnName(group.key) === columnName) {
         return group;
@@ -566,6 +616,7 @@ export class KanbanView extends BasesView implements HoverParent {
     this.ensureFileNameInOrder();
     this.selectedCards.clear();
     const scrollState = this.captureScrollState();
+    this.calendarManager.captureScroll();
 
     // Index stable DOM nodes before rebuilding the lightweight board shell.
     // Columns are detached as complete subtrees, preserving their card lists,
@@ -648,6 +699,7 @@ export class KanbanView extends BasesView implements HoverParent {
 
     this.columnManager.renderAddColumnButton(boardEl);
     this.dragDropManager.initBoard(boardEl);
+    this.calendarManager.render(this.containerEl);
     this.restoreScrollState(boardEl, scrollState);
   }
 

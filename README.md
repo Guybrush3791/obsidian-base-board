@@ -27,6 +27,7 @@
 - **WIP Limits**: Set per-column work-in-progress limits via the column header context menu. Columns that exceed their limit are highlighted in red.
 - **Collapsible Columns**: Collapse any column to save space; the state is remembered per board.
 - **Card Cover Images**: Display cover images at the top of cards by specifying an image frontmatter property (e.g., `cover: "[[image.png]]"` or a web URL). Defaults to the `cover` property.
+- **Calendar**: A month calendar below the board shows every card with a valid `date` property. Click a day to open a sidebar with that day's cards laid out by time.
 - **Data First**: All changes are written directly to your Markdown files.
 
 ## Usage
@@ -65,6 +66,25 @@ views:
 ```
 
 This ensures new cards automatically receive required frontmatter fields, keeping them visible on filtered boards.
+
+### Calendar
+
+Below the board, a month calendar places every card whose `date` property holds a valid date:
+
+```yaml
+---
+status: Scheduled
+date: 2026-10-13T22:00:00 # timed — shown at 22:00
+---
+```
+
+A date without a time (`date: 2026-10-13`) is shown as an all-day card. Values that aren't real dates are ignored, and the calendar header shows how many cards have a valid date. Chips are colored by their column color and respect the tag filter bar.
+
+- **Click a day** to split the calendar: a sidebar opens on the right with the day's all-day cards and an hourly timeline. Click a card in the sidebar to open its note.
+- **Close** the sidebar with **×**, **Escape**, or by clicking the same day again — the calendar returns to full width.
+- Use **‹ / ›** and **Today** to change month, and the chevron to collapse the calendar to its header.
+
+The week start and month/day names follow Obsidian's language setting. In the view options (**Calendar** group) you can hide the calendar or read dates from a different property.
 
 ### Migrating boards created before the `base-board-kanban` view type
 
