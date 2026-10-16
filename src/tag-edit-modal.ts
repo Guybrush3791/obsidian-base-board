@@ -29,6 +29,7 @@ export class TagEditModal extends Modal {
   }
 
   onOpen() {
+    this.modalEl.addClass("base-board-tag-modal");
     this.titleEl.setText("Edit tags");
 
     this.contentEl.createEl("p", {

@@ -908,11 +908,21 @@
 }
 
 /* Tag Edit Modal */
+.modal.base-board-tag-modal {
+  width: 600px;
+  max-width: 95vw;
+}
+
 .base-board-tag-suggestions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 12px;
+}
+
+.base-board-tag-suggestions .base-board-filter-pill {
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .base-board-tag-suggestions:empty {
