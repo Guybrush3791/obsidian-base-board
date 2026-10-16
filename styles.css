@@ -908,6 +908,31 @@
 }
 
 /* Tag Edit Modal */
+.base-board-tag-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.base-board-tag-suggestions:empty {
+  display: none;
+}
+
+.base-board-tag-suggestions .base-board-filter-pill:not(.is-active) {
+  opacity: 0.45;
+}
+
+.base-board-tag-suggestions .base-board-filter-pill:not(.is-active):hover {
+  opacity: 0.75;
+}
+
+.base-board-tag-suggestions .base-board-filter-pill.is-active {
+  box-shadow:
+    0 0 0 2px var(--modal-background),
+    0 0 0 4px var(--interactive-accent);
+}
+
 .base-board-tag-input-container {
   display: flex;
   flex-wrap: wrap;

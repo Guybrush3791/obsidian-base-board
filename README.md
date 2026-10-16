@@ -21,7 +21,7 @@
 - **Native Editing Modal**: Open any card into a fully-functional Obsidian editor floating directly over your workspace.
 - **Rich Cards**: View key metadata fields as chips on each card for a quick overview.
 - **Configurable Card Title**: Set `cardTitleProperty: note.title` in your `.base` file to use a frontmatter property (e.g. `title`) as the card heading instead of the filename.
-- **Tags**: Color-coded tag chips on cards with a clickable filter bar to narrow the board by tag.
+- **Tags**: Color-coded tag chips on cards with a clickable filter bar to narrow the board by tag. The **Edit tags** dialog lists every tag already on the board as a pill you can click to add or remove it, so you don't have to retype it.
 - **Hover Preview**: Native note previews on hover (uses the **Page preview** core plugin).
 - **One-Click Creation**: Add new notes directly to a specific column without leaving the board view.
 - **WIP Limits**: Set per-column work-in-progress limits via the column header context menu. Columns that exceed their limit are highlighted in red.

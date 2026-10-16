@@ -6,6 +6,9 @@ export class TagEditModal extends Modal {
   private tags: string[];
   private tagsManager: Tags;
   private onSubmit: (tags: string[]) => void;
+  // Tags offered as toggle pills: the board's tags plus any typed in this session
+  private knownTags: string[];
+  private suggestionsEl!: HTMLElement;
   private inputContainerEl!: HTMLElement;
   private inputEl!: HTMLInputElement;
 
@@ -19,14 +22,22 @@ export class TagEditModal extends Modal {
     this.tags = [...tags]; // Copy
     this.tagsManager = tagsManager;
     this.onSubmit = onSubmit;
+    this.knownTags = tagsManager.getBoardTags();
+    for (const tag of this.tags) {
+      if (!this.knownTags.includes(tag)) this.knownTags.push(tag);
+    }
   }
 
   onOpen() {
     this.titleEl.setText("Edit tags");
 
     this.contentEl.createEl("p", {
-      text: "Type a tag and press enter or comma. Press backspace to remove.",
+      text: "Click a tag to toggle it, or type a new one and press enter or comma. Press backspace to remove.",
       cls: "setting-item-description",
+    });
+
+    this.suggestionsEl = this.contentEl.createDiv({
+      cls: "base-board-tag-suggestions",
     });
 
     // Container acts as the visual "input box"
@@ -49,10 +60,7 @@ export class TagEditModal extends Modal {
     this.inputEl.addEventListener("keydown", (e: KeyboardEvent) => {
       if (e.key === "Enter" || e.key === ",") {
         e.preventDefault();
-        const val = this.inputEl.value.trim();
-        if (val && !this.tags.includes(val)) {
-          this.tags.push(val);
-        }
+        this.addTag(this.inputEl.value.trim());
         this.inputEl.value = "";
         this.renderTags();
       } else if (e.key === "Backspace" && this.inputEl.value === "") {
@@ -75,16 +83,19 @@ export class TagEditModal extends Modal {
         .setCta()
         .onClick(() => {
           // Flush any pending text before save
-          const val = this.inputEl.value.trim();
-          if (val && !this.tags.includes(val)) {
-            this.tags.push(val);
-          }
+          this.addTag(this.inputEl.value.trim());
           this.close();
           this.onSubmit(this.tags);
         });
     });
 
     window.setTimeout(() => this.inputEl.focus(), 50);
+  }
+
+  private addTag(tag: string) {
+    if (!tag || this.tags.includes(tag)) return;
+    this.tags.push(tag);
+    if (!this.knownTags.includes(tag)) this.knownTags.push(tag);
   }
 
   private renderTags() {
@@ -124,6 +135,27 @@ export class TagEditModal extends Modal {
 
       this.inputContainerEl.insertBefore(chipEl, this.inputEl);
     });
+
+    this.renderSuggestions();
+  }
+
+  private renderSuggestions() {
+    this.suggestionsEl.empty();
+
+    for (const tag of this.knownTags) {
+      const pill = this.tagsManager.createTagPill(this.suggestionsEl, tag);
+      pill.toggleClass("is-active", this.tags.includes(tag));
+
+      pill.addEventListener("click", () => {
+        if (this.tags.includes(tag)) {
+          this.tags = this.tags.filter((t) => t !== tag);
+        } else {
+          this.tags.push(tag);
+        }
+        this.renderTags();
+        this.inputEl.focus();
+      });
+    }
   }
 
   onClose() {

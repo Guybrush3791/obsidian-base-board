@@ -86,6 +86,38 @@ export class Tags {
     );
   }
 
+  /** Sorted, de-duplicated tags across every card on the board. */
+  public getBoardTags(): string[] {
+    const allTags = new Set<string>();
+
+    for (const group of this.view.currentGroups) {
+      for (const entry of group.entries) {
+        if (entry.file instanceof TFile) {
+          const fileTags = this.extractTagsFromFile(entry.file);
+          fileTags.forEach((t) => allTags.add(t));
+        }
+      }
+    }
+
+    return Array.from(allTags).sort();
+  }
+
+  /** Colored tag pill shared by the filter bar and the tag edit modal. */
+  public createTagPill(parent: HTMLElement, tag: string): HTMLElement {
+    const pill = parent.createSpan({ cls: "base-board-filter-pill" });
+    pill.textContent = tag;
+
+    const tagColor = this.getColorForTag(tag);
+    pill.style.setProperty("--tag-color", tagColor);
+    if (relativeLuminance(tagColor) === "dark") {
+      pill.addClass("base-board-filter-pill-light");
+    } else {
+      pill.addClass("base-board-filter-pill-dark");
+    }
+
+    return pill;
+  }
+
   public promptEditTags(file: TFile): void {
     const currentTags = this.extractTagsFromFile(file);
     new TagEditModal(this.view.app, currentTags, this, (newTags: string[]) => {
@@ -104,18 +136,9 @@ export class Tags {
   }
 
   public renderFilterBar(container: HTMLElement): void {
-    const allTags = new Set<string>();
+    const tagsArray = this.getBoardTags();
 
-    for (const group of this.view.currentGroups) {
-      for (const entry of group.entries) {
-        if (entry.file instanceof TFile) {
-          const fileTags = this.extractTagsFromFile(entry.file);
-          fileTags.forEach((t) => allTags.add(t));
-        }
-      }
-    }
-
-    if (allTags.size === 0 && this.activeFilters.size === 0) {
+    if (tagsArray.length === 0 && this.activeFilters.size === 0) {
       return;
     }
 
@@ -132,26 +155,14 @@ export class Tags {
     });
     setIcon(titleEl, "lucide-filter");
 
-    const tagsArray = Array.from(allTags).sort();
-
     // Also include any active filters that might not be in the current cards
     for (const activeTag of this.activeFilters) {
-      if (!allTags.has(activeTag)) tagsArray.push(activeTag);
+      if (!tagsArray.includes(activeTag)) tagsArray.push(activeTag);
     }
 
     for (const tag of tagsArray) {
-      const pill = barEl.createSpan({ cls: "base-board-filter-pill" });
-      pill.textContent = tag;
-
+      const pill = this.createTagPill(barEl, tag);
       const tagColor = this.getColorForTag(tag);
-      if (tagColor) {
-        pill.style.setProperty("--tag-color", tagColor);
-        if (relativeLuminance(tagColor) === "dark") {
-          pill.addClass("base-board-filter-pill-light");
-        } else {
-          pill.addClass("base-board-filter-pill-dark");
-        }
-      }
 
       if (this.activeFilters.has(tag)) {
         pill.addClass("is-active");
